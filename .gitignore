@@ -1,2 +1,5 @@
 # Local Pi runtime state
 .atl/
+
+# Local dependency symlinks into the Pi install
+node_modules/

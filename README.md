@@ -146,7 +146,7 @@ The tool description has to lead with the trigger list, avoid repeating what the
 
 ## Credits
 
-Rubber duck artwork by Magnific.
+[Rubber duck artwork](duck.png) by Magnific.
 
 Built with [pi](https://github.com/badlogic/pi-mono).
 
