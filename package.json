@@ -24,7 +24,8 @@
 	"pi": {
 		"extensions": [
 			"./index.ts"
-		]
+		],
+		"image": "https://raw.githubusercontent.com/ChWehner/pi-rubber-duck/develop/duck.png"
 	},
 	"knip": {
 		"entry": [

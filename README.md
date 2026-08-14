@@ -95,7 +95,7 @@ duck stops listening, so it never sits there stale while the model works on.
 ```text
 🐤 stretch 3
   The timer offset is per replica, so four pods drift independently.
-  Type anything to interject ✏️. It lands before the next stretch 🛬.
+  Your message arrives before the next stretch.
 ```
 
 Interjections use pi's own steering. Type while the model is working and your
