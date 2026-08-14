@@ -1,0 +1,23 @@
+{
+	"name": "pi-rubber-duck",
+	"version": "1.0.0",
+	"description": "A rubber duck for your coding agent. The model explains its problem out loud; the duck never answers.",
+	"author": "Christoph Wehner",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ChWehner/pi-rubber-duck.git"
+	},
+	"keywords": [
+		"pi",
+		"pi-extension",
+		"rubber-duck",
+		"debugging",
+		"coding-agent"
+	],
+	"pi": {
+		"extensions": [
+			"./index.ts"
+		]
+	}
+}
