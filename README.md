@@ -145,6 +145,21 @@ functions, so the tests need no harness and no mocks. The prompts get tested too
 The tool description has to lead with the trigger list, avoid repeating what the
 `exit` enum already says, and never ship stray whitespace to the model.
 
+## Contribute
+
+Issue first, always. Open one with the bug, feature or chore template, then
+branch off `develop` as `feature/…`, `bug/…` or `chore/…`, one problem per
+branch. Fork the repo if you do not have push access.
+
+Commits read `#42: Add feedback button`, imperative and under 72 characters.
+Pull requests go into `develop`, titled `Feature: Add feedback button (#42)`,
+using the PR template and closing their issue. `main` stays production-ready and
+is released from semver tags. Only `hotfix/…` starts from `main` and targets it,
+and lands in `develop` afterwards.
+
+Before opening the PR, run `node --test index.test.ts`, review your own diff and
+keep it under 400 lines. A maintainer reviews and merges.
+
 ## Credits
 
 [Rubber duck artwork](duck.png) by Magnific.
