@@ -89,7 +89,8 @@ Four rules, first hit wins.
 
 ## What you see, and getting a word in
 
-A widget above the editor, refreshed on every stretch.
+A widget above the editor, refreshed on every stretch and cleared the moment the
+duck stops listening, so it never sits there stale while the model works on.
 
 ```text
 🐤 stretch 3

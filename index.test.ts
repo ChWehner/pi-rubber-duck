@@ -3,7 +3,6 @@ import { test } from "node:test";
 import {
 	TOOL_DESCRIPTION,
 	fixDidNotHold,
-	doneLines,
 	quack,
 	watchingLines,
 } from "./index.ts";
@@ -119,12 +118,6 @@ test("the watch surface shows where the meander is, plus the way in", () => {
 	assert.match(lines[0], /stretch 3/);
 	assert.match(lines[1], /timer offset is per replica/);
 	assert.match(lines[2], /interject/);
-});
-
-test("the watch surface collapses to one line once the duck is done", () => {
-	const lines = doneLines(4);
-	assert.equal(lines.length, 1);
-	assert.match(lines[0], /done listening/);
 });
 
 test("a long sentence is clipped so the widget cannot grow", () => {

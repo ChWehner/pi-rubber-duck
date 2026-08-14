@@ -160,11 +160,6 @@ export function watchingLines(
 	];
 }
 
-/** The duck stopped listening. The next call starts a fresh one at stretch 1. */
-export const doneLines = (stretchNo: number): string[] => [
-	`🐤 stretch ${stretchNo} — the duck is done listening`,
-];
-
 export const TOOL_DESCRIPTION =
 	"Call this the moment any of these is true: (1) your first fix for this failure did not hold; (2) you just made a claim about behavior you have not observed — should, must, obviously, probably, seems fine; (3) you are about to change several callers or files, or run something expensive; (4) you have read the same file twice without learning anything new; (5) you can state the result you want but cannot predict the next concrete value. Then explain the problem out loud to an inanimate object, one stretch per call, in prose. The duck does not answer, react, or help — talking is the whole mechanism, and the cause usually surfaces mid-sentence, not at the end. Keep calling it; a stretch that surfaces nothing is normal. Set exit only when one of its cases fits.";
 
@@ -220,12 +215,13 @@ export default function (pi: ExtensionAPI) {
 			const stretches = said.length;
 			// This duck is done. A further call is a new conversation, not a resumed one.
 			if (done) said = [];
+			// Nothing to watch once the duck stops listening, and the model keeps
+			// working for a long time after: a done frame would sit there stale
+			// until the whole run settles. The transcript already holds the ending.
 			if (ctx.hasUI) {
 				ctx.ui.setWidget(
 					"rubber-duck",
-					done
-						? doneLines(stretches)
-						: watchingLines(stretches, input.explanation),
+					done ? undefined : watchingLines(stretches, input.explanation),
 				);
 			}
 			return {
