@@ -156,7 +156,7 @@ export function watchingLines(
 	return [
 		`🐤 stretch ${stretchNo}`,
 		`  ${clip(here)}`,
-		"  Your message arrives before the next stretch.",
+		"  Say something anytime.",
 	];
 }
 

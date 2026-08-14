@@ -117,7 +117,7 @@ test("the watch surface shows where the meander is, plus the way in", () => {
 	);
 	assert.match(lines[0], /stretch 3/);
 	assert.match(lines[1], /timer offset is per replica/);
-	assert.equal(lines[2], "  Your message arrives before the next stretch.");
+	assert.equal(lines[2], "  Say something anytime.");
 });
 
 test("a long sentence is clipped so the widget cannot grow", () => {
