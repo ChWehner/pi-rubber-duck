@@ -156,7 +156,7 @@ export function watchingLines(
 	return [
 		`🐤 stretch ${stretchNo}`,
 		`  ${clip(here)}`,
-		"  Type anything to interject ✏️. It lands before the next stretch 🛬.",
+		"  Say something anytime.",
 	];
 }
 
