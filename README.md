@@ -89,11 +89,12 @@ Four rules, first hit wins.
 
 ## What you see, and getting a word in
 
-A widget above the editor, refreshed on every stretch and cleared the moment the
-duck stops listening, so it never sits there stale while the model works on.
+A widget above the editor, refreshed on every stretch and left up for 30 seconds
+from the latest one. It briefly waddles away before clearing; a final duck exit
+clears it immediately.
 
 ```text
-🐤 stretch 3
+🐤
   The timer offset is per replica, so four pods drift independently.
   Say something anytime.
 ```

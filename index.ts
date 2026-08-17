@@ -1,5 +1,8 @@
 import { readFileSync } from "node:fs";
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type {
+	ExtensionAPI,
+	ExtensionContext,
+} from "@earendil-works/pi-coding-agent";
 import { StringEnum } from "@earendil-works/pi-ai";
 import { getPngDimensions, renderImage } from "@earendil-works/pi-tui";
 import { Type, type Static } from "typebox";
@@ -51,6 +54,8 @@ const HEDGES =
 
 /** You do not find it at the end of the explanation. You find it mid-sentence. */
 const MIN_STRETCHES = 3;
+const DUCK_WIDGET_TIMEOUT_MS = 30_000;
+const DUCK_EXIT_DURATION_MS = 500;
 
 /** How much of what you just said is old news. */
 const REPEAT_RATIO = 0.6;
@@ -148,16 +153,9 @@ export function quack(
 }
 
 /** What the human watches while the model meanders. The last sentence is where the meander currently is. */
-export function watchingLines(
-	stretchNo: number,
-	explanation: string,
-): string[] {
+export function watchingLines(explanation: string): string[] {
 	const here = sentences(explanation).at(-1) ?? explanation;
-	return [
-		`🐤 stretch ${stretchNo}`,
-		`  ${clip(here)}`,
-		"  Say something anytime.",
-	];
+	return ["🐤", `  ${clip(here)}`, "  Say something anytime."];
 }
 
 export const TOOL_DESCRIPTION =
@@ -187,10 +185,42 @@ export default function (pi: ExtensionAPI) {
 	// ponytail: one duck per extension instance. Two concurrent duck calls in one assistant message
 	// would share this history and race for the widget; split per toolCallId if that ever happens.
 	let said: string[] = [];
-	const reset = () => {
-		said = [];
+	let widgetVersion = 0;
+	let timeout: ReturnType<typeof setTimeout> | undefined;
+	let exitTimeout: ReturnType<typeof setTimeout> | undefined;
+	const cancelWidgetTimers = () => {
+		if (timeout !== undefined) clearTimeout(timeout);
+		if (exitTimeout !== undefined) clearTimeout(exitTimeout);
+		timeout = undefined;
+		exitTimeout = undefined;
 	};
-	pi.on("session_start", reset);
+	const replaceWidget = (
+		ctx: ExtensionContext,
+		content: string[] | undefined,
+	) => {
+		widgetVersion += 1;
+		cancelWidgetTimers();
+		if (ctx.hasUI) ctx.ui.setWidget("rubber-duck", content);
+	};
+	const showDuckWidget = (ctx: ExtensionContext, explanation: string) => {
+		const version = widgetVersion + 1;
+		replaceWidget(ctx, watchingLines(explanation));
+		timeout = setTimeout(() => {
+			if (version !== widgetVersion) return;
+			timeout = undefined;
+			ctx.ui.setWidget("rubber-duck", ["🐤 …"]);
+			exitTimeout = setTimeout(() => {
+				if (version !== widgetVersion) return;
+				exitTimeout = undefined;
+				ctx.ui.setWidget("rubber-duck", undefined);
+			}, DUCK_EXIT_DURATION_MS);
+		}, DUCK_WIDGET_TIMEOUT_MS);
+	};
+	const reset = (ctx: ExtensionContext) => {
+		said = [];
+		replaceWidget(ctx, undefined);
+	};
+	pi.on("session_start", (_event, ctx) => reset(ctx));
 	// Say it once, at the moment it is true. The model remains free to ignore it.
 	pi.on("before_agent_start", (event) => {
 		if (!fixDidNotHold(event.prompt)) return;
@@ -198,10 +228,8 @@ export default function (pi: ExtensionAPI) {
 			systemPrompt: `${event.systemPrompt}\n\nA previous fix for this failure did not hold. That is rubber_duck trigger (1). Explain the problem to the duck before proposing another fix.`,
 		};
 	});
-	// The duck is only listening during a turn; never leave it on screen afterwards.
-	pi.on("agent_settled", (_event, ctx) => {
-		ctx.ui.setWidget("rubber-duck", undefined);
-		reset();
+	pi.on("agent_settled", () => {
+		said = [];
 	});
 
 	pi.registerTool({
@@ -215,15 +243,8 @@ export default function (pi: ExtensionAPI) {
 			const stretches = said.length;
 			// This duck is done. A further call is a new conversation, not a resumed one.
 			if (done) said = [];
-			// Nothing to watch once the duck stops listening, and the model keeps
-			// working for a long time after: a done frame would sit there stale
-			// until the whole run settles. The transcript already holds the ending.
-			if (ctx.hasUI) {
-				ctx.ui.setWidget(
-					"rubber-duck",
-					done ? undefined : watchingLines(stretches, input.explanation),
-				);
-			}
+			if (done) replaceWidget(ctx, undefined);
+			else if (ctx.hasUI) showDuckWidget(ctx, input.explanation);
 			return {
 				content: [{ type: "text", text }],
 				details: { stretches, done },
@@ -234,11 +255,7 @@ export default function (pi: ExtensionAPI) {
 	pi.registerCommand("duck-credits", {
 		description: "Show the duck artwork credit",
 		handler: async (_args, ctx) => {
-			ctx.ui.setWidget("rubber-duck", [
-				duckGlyph(12, 6),
-				"",
-				`  ${DUCK_CREDIT}`,
-			]);
+			replaceWidget(ctx, [duckGlyph(12, 6), "", `  ${DUCK_CREDIT}`]);
 			ctx.ui.notify(DUCK_CREDIT, "info");
 		},
 	});
