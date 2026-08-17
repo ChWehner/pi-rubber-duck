@@ -1,5 +1,7 @@
 # Local Pi runtime state
 .atl/
+.pi/
+openspec/
 
 # Local dependency symlinks into the Pi install
 node_modules/

@@ -4,6 +4,17 @@
 	"description": "A rubber duck for your coding agent. The model explains its problem out loud; the duck never answers.",
 	"author": "Christoph Wehner",
 	"license": "MIT",
+	"type": "module",
+	"engines": {
+		"node": ">=22.18"
+	},
+	"scripts": {
+		"format": "prettier --check .",
+		"typecheck": "tsc --noEmit",
+		"test": "node --test index.test.ts",
+		"test:markers": "node scripts/check-test-markers.mjs",
+		"check": "npm run format && npm run typecheck && npm run test:markers && npm test"
+	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/ChWehner/pi-rubber-duck.git"
@@ -20,6 +31,11 @@
 		"@earendil-works/pi-coding-agent": "^0.84.1",
 		"@earendil-works/pi-tui": "^0.84.1",
 		"typebox": "^1.3.7"
+	},
+	"devDependencies": {
+		"@types/node": "^22.18.0",
+		"prettier": "^3.0.0",
+		"typescript": "5.8.3"
 	},
 	"pi": {
 		"extensions": [
