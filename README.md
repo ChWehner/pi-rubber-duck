@@ -89,13 +89,14 @@ Four rules, first hit wins.
 
 ## What you see, and getting a word in
 
-A widget above the editor, refreshed on every stretch and cleared the moment the
-duck stops listening, so it never sits there stale while the model works on.
+A widget above the editor, refreshed on every stretch and left up for 30 seconds
+from the latest one. It briefly waddles away before clearing; a final duck exit
+clears it immediately.
 
 ```text
-🐤 stretch 3
+🐤
   The timer offset is per replica, so four pods drift independently.
-  Type anything to interject ✏️. It lands before the next stretch 🛬.
+  Say something anytime.
 ```
 
 Interjections use pi's own steering. Type while the model is working and your
@@ -136,14 +137,25 @@ should stay quiet.
 
 ## Development
 
+Node.js 22.18 or newer runs the TypeScript behavior tests natively. Install
+dependencies with npm, then run the local quality gate before opening a PR:
+
 ```bash
-node --test index.test.ts
+npm install
+npm run check
 ```
 
-23 tests, no framework and no fixtures. All of the logic sits in pure exported
-functions, so the tests need no harness and no mocks. The prompts get tested too.
-The tool description has to lead with the trigger list, avoid repeating what the
-`exit` enum already says, and never ship stray whitespace to the model.
+`npm run check` verifies formatting, strict no-emit TypeScript types, test markers,
+and the native behavior suite. It was added for [issue #3](https://github.com/ChWehner/pi-rubber-duck/issues/3).
+No framework or fixtures are needed: all of the logic sits in pure exported
+functions, so the tests need no harness or mocks. The prompts get tested too. The
+tool description has to lead with the trigger list, avoid repeating what the `exit`
+enum already says, and never ship stray whitespace to the model.
+
+The CI workflow exposes the stable `quality` status. After it has merged to the
+default branch and reported a run, a maintainer must manually require `quality` and
+apply any direct-push policy through branch protection or rulesets for both `develop`
+and `main`; the workflow does not change GitHub administration settings.
 
 ## Contribute
 
@@ -157,8 +169,10 @@ using the PR template and closing their issue. `main` stays production-ready and
 is released from semver tags. Only `hotfix/…` starts from `main` and targets it,
 and lands in `develop` afterwards.
 
-Before opening the PR, run `node --test index.test.ts`, review your own diff and
-keep it under 400 lines. A maintainer reviews and merges.
+Before opening the PR, run `npm run check`, review your own diff and keep it under
+400 lines. A maintainer reviews and merges. The CI-quality PR for issue #3 has a
+separate 200-line review-discussion budget; it is stricter than and distinct from
+this repository-wide 400-line contributor guideline.
 
 ## Credits
 

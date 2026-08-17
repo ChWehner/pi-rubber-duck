@@ -1,11 +1,73 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import {
+import install, {
+	type RubberDuckInput,
 	TOOL_DESCRIPTION,
 	fixDidNotHold,
 	quack,
 	watchingLines,
 } from "./index.ts";
+
+type WidgetUpdate = { key: string; content: string[] | undefined };
+type WidgetContext = {
+	hasUI: boolean;
+	ui: {
+		setWidget(key: string, content: string[] | undefined): void;
+		notify(message: string, type: "info"): void;
+	};
+};
+type DuckTool = {
+	execute(
+		id: string,
+		input: RubberDuckInput,
+		signal: AbortSignal,
+		onUpdate: () => void,
+		ctx: WidgetContext,
+	): Promise<unknown>;
+};
+type DuckCommand = { handler(args: string, ctx: WidgetContext): Promise<void> };
+type EventHandler = (event: unknown, ctx: WidgetContext) => void;
+
+function installDuck() {
+	const widgetUpdates: WidgetUpdate[] = [];
+	const handlers = new Map<string, EventHandler>();
+	let duckTool: DuckTool | undefined;
+	let credits: DuckCommand | undefined;
+	const ctx: WidgetContext = {
+		hasUI: true,
+		ui: {
+			setWidget(key, content) {
+				widgetUpdates.push({ key, content });
+			},
+			notify() {},
+		},
+	};
+
+	install({
+		on(event: string, handler: EventHandler) {
+			handlers.set(event, handler);
+		},
+		registerTool(tool: DuckTool) {
+			duckTool = tool;
+		},
+		registerCommand(name: string, command: DuckCommand) {
+			if (name === "duck-credits") credits = command;
+		},
+	} as unknown as Parameters<typeof install>[0]);
+
+	const tool = duckTool;
+	const creditCommand = credits;
+	assert.ok(tool);
+	assert.ok(creditCommand);
+	return {
+		widgetUpdates,
+		call: (input: RubberDuckInput) =>
+			tool.execute("test", input, new AbortController().signal, () => {}, ctx),
+		showCredits: () => creditCommand.handler("", ctx),
+		settleAgent: () => handlers.get("agent_settled")?.({}, ctx),
+		resetSession: () => handlers.get("session_start")?.({}, ctx),
+	};
+}
 
 test("hangs your own hedged sentence in the air, with no commentary", () => {
 	const { text } = quack(
@@ -112,18 +174,83 @@ test("terminal punctuation inside a closing quote still ends the sentence", () =
 
 test("the watch surface shows where the meander is, plus the way in", () => {
 	const lines = watchingLines(
-		3,
 		"We read the row. The timer offset is per replica.",
 	);
-	assert.match(lines[0], /stretch 3/);
+	assert.equal(lines[0], "🐤");
+	assert.doesNotMatch(lines.join("\n"), /stretch \d/);
 	assert.match(lines[1], /timer offset is per replica/);
-	assert.match(lines[2], /interject/);
+	assert.equal(lines[2], "  Say something anytime.");
 });
 
 test("a long sentence is clipped so the widget cannot grow", () => {
-	const lines = watchingLines(1, `${"word ".repeat(60)}end.`);
+	const lines = watchingLines(`${"word ".repeat(60)}end.`);
 	assert.ok(lines[1].length <= 100, lines[1].length.toString());
 	assert.match(lines[1], /…$/);
+});
+
+test("the widget stays for 30 seconds, then exits and clears", async (t) => {
+	t.mock.timers.enable({ apis: ["setTimeout"] });
+	const duck = installDuck();
+
+	await duck.call({ explanation: "The first explanation." });
+	duck.settleAgent();
+	t.mock.timers.tick(29_999);
+	assert.equal(duck.widgetUpdates.length, 1);
+	t.mock.timers.tick(1);
+	assert.equal(duck.widgetUpdates.length, 2);
+	assert.equal(duck.widgetUpdates.at(-1)?.key, "rubber-duck");
+	assert.ok(duck.widgetUpdates.at(-1)?.content);
+	t.mock.timers.tick(500);
+	assert.deepEqual(duck.widgetUpdates.at(-1), {
+		key: "rubber-duck",
+		content: undefined,
+	});
+});
+
+test("a later duck update resets the timeout and defeats an earlier exit", async (t) => {
+	t.mock.timers.enable({ apis: ["setTimeout"] });
+	const duck = installDuck();
+
+	await duck.call({ explanation: "The first explanation." });
+	t.mock.timers.tick(29_999);
+	await duck.call({ explanation: "The second explanation." });
+	t.mock.timers.tick(1);
+	assert.equal(duck.widgetUpdates.length, 2);
+	t.mock.timers.tick(29_998);
+	assert.equal(duck.widgetUpdates.length, 2);
+	t.mock.timers.tick(1);
+	assert.equal(duck.widgetUpdates.length, 3);
+	await duck.call({ explanation: "The third explanation." });
+	t.mock.timers.tick(500);
+	assert.notEqual(duck.widgetUpdates.at(-1)?.content, undefined);
+});
+
+test("final calls, session reset, and credits cancel delayed duck cleanup", async (t) => {
+	t.mock.timers.enable({ apis: ["setTimeout"] });
+	const duck = installDuck();
+
+	await duck.call({ explanation: "The first explanation." });
+	await duck.showCredits();
+	const credit = duck.widgetUpdates.at(-1);
+	t.mock.timers.tick(30_500);
+	assert.deepEqual(duck.widgetUpdates.at(-1), credit);
+
+	await duck.call({ explanation: "The next explanation." });
+	await duck.call({
+		explanation: "I need a measurement.",
+		exit: "must_measure",
+	});
+	assert.equal(duck.widgetUpdates.at(-1)?.content, undefined);
+	const afterFinal = duck.widgetUpdates.length;
+	t.mock.timers.tick(30_500);
+	assert.equal(duck.widgetUpdates.length, afterFinal);
+
+	await duck.call({ explanation: "One more explanation." });
+	duck.resetSession();
+	assert.equal(duck.widgetUpdates.at(-1)?.content, undefined);
+	const afterReset = duck.widgetUpdates.length;
+	t.mock.timers.tick(30_500);
+	assert.equal(duck.widgetUpdates.length, afterReset);
 });
 
 test("the description leads with when to call, not what it is", () => {
