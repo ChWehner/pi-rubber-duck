@@ -48,6 +48,8 @@ Or install it as a pi package.
 
 ```bash
 pi install git:github.com/ChWehner/pi-rubber-duck
+# Or install the published package:
+pi install npm:pi-rubber-duck
 ```
 
 Then restart pi, or run `/reload`.
@@ -146,7 +148,7 @@ npm run check
 ```
 
 `npm run check` verifies formatting, strict no-emit TypeScript types, test markers,
-and the native behavior suite. It was added for [issue #3](https://github.com/ChWehner/pi-rubber-duck/issues/3).
+package contents, and the native behavior suite. It was added for [issue #3](https://github.com/ChWehner/pi-rubber-duck/issues/3).
 No framework or fixtures are needed: all of the logic sits in pure exported
 functions, so the tests need no harness or mocks. The prompts get tested too. The
 tool description has to lead with the trigger list, avoid repeating what the `exit`
@@ -156,6 +158,11 @@ The CI workflow exposes the stable `quality` status. After it has merged to the
 default branch and reported a run, a maintainer must manually require `quality` and
 apply any direct-push policy through branch protection or rulesets for both `develop`
 and `main`; the workflow does not change GitHub administration settings.
+
+Publishing starts only when a non-prerelease GitHub Release is published. Its tag must
+exactly match `v<package.json.version>`; before publishing, the workflow runs `npm run
+check` and verifies the package payload. npm trusted publishing uses GitHub OIDC, so no
+`NPM_TOKEN` is stored in the repository.
 
 ## Contribute
 

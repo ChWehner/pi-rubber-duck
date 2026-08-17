@@ -13,18 +13,26 @@
 		"typecheck": "tsc --noEmit",
 		"test": "node --test index.test.ts",
 		"test:markers": "node scripts/check-test-markers.mjs",
-		"check": "npm run format && npm run typecheck && npm run test:markers && npm test"
+		"test:package": "node scripts/check-package-contents.mjs",
+		"check": "npm run format && npm run typecheck && npm run test:markers && npm run test:package && npm test"
 	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/ChWehner/pi-rubber-duck.git"
 	},
+	"homepage": "https://github.com/ChWehner/pi-rubber-duck#readme",
+	"bugs": "https://github.com/ChWehner/pi-rubber-duck/issues",
 	"keywords": [
 		"pi",
 		"pi-extension",
 		"rubber-duck",
 		"debugging",
-		"coding-agent"
+		"coding-agent",
+		"pi-package"
+	],
+	"files": [
+		"index.ts",
+		"duck.png"
 	],
 	"peerDependencies": {
 		"@earendil-works/pi-ai": "^0.84.1",
