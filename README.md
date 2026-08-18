@@ -39,17 +39,23 @@ No LLM calls, no network, and every response is deterministic.
 
 ## Install
 
+Install the published package.
+
 ```bash
-git clone https://github.com/ChWehner/pi-rubber-duck.git \
-  ~/.pi/agent/extensions/rubber-duck
+pi install npm:pi-rubber-duck
 ```
 
-Or install it as a pi package.
+Or install from Git.
 
 ```bash
 pi install git:github.com/ChWehner/pi-rubber-duck
-# Or install the published package:
-pi install npm:pi-rubber-duck
+```
+
+Or clone it into your local extensions directory.
+
+```bash
+git clone https://github.com/ChWehner/pi-rubber-duck.git \
+  ~/.pi/agent/extensions/rubber-duck
 ```
 
 Then restart pi, or run `/reload`.
