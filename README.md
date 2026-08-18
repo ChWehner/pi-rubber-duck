@@ -56,28 +56,17 @@ Then restart pi, or run `/reload`.
 
 ## How the loop works
 
-The model calls `rubber_duck` over and over, one stretch of explanation per call.
-Each call runs these checks in order and the first match wins.
+The model calls `rubber_duck` once per stretch. The first matching rule wins.
 
 | #   | Condition                                                         | Result                                                   |
 | --- | ----------------------------------------------------------------- | -------------------------------------------------------- |
-| 1   | `exit` is `must_measure`                                          | Stop. "Go measure it." No minimum, on purpose            |
+| 1   | `exit` is `must_measure`                                          | Stop. "Go measure it."                                   |
 | 2   | `exit` is `found_it`, third call or later                         | Stop. "Verify it before editing."                        |
 | 3   | `exit` is `exhausted` third call or later, or repetition shows up | Stop. "Talking is done. Read the path or instrument it." |
 | 4   | anything else                                                     | Keep listening. Echo plus "Keep explaining."             |
 
-There are three ways out rather than one. With a single exit, any session that
-does not end in a revelation has to invent one. The most common honest ending is
-`must_measure`, where the next thing the model would say needs a value it does
-not have. That one has no minimum, because leaving to go and measure on the first
-sentence is the right move rather than an impatient one.
-
-There is no turn cap. A cap only teaches the model to pay a fixed toll of N
-calls. The loop ends on repetition instead. Once a stretch is roughly 60 percent
-old words, the model is rehearsing rather than exploring and the ground is
-already covered. Repetition is the one ending the duck can spot by itself,
-because you cannot measure insight from the outside but you can measure
-rehearsal.
+`must_measure` can end the first call. The other exits need three calls unless
+the explanation repeats. There is no turn cap.
 
 ## Which sentence it hands back
 
@@ -92,7 +81,7 @@ Four rules, first hit wins.
 ## What you see, and getting a word in
 
 A widget above the editor, refreshed on every stretch and left up for 30 seconds
-from the latest one. It briefly waddles away before clearing; a final duck exit
+from the latest one. It briefly waddles away before clearing. A final duck exit
 clears it immediately.
 
 ```text
@@ -103,32 +92,20 @@ clears it immediately.
 
 Interjections use pi's own steering. Type while the model is working and your
 message arrives between stretches. The duck holds no lock and cannot force
-another call, which is exactly why you can always get a word in. Esc still stops
-everything.
+another call, so you can always get a word in. Esc still stops everything.
 
 ## When it fires
 
-The triggers are events rather than feelings. Feeling stuck is not observable,
-and models tend to feel stuck when they are calm and close to the answer, not
-while confidently shipping a bad fix.
+The duck fires when one of these is true.
 
 1. The first fix for this failure did not hold.
-2. The model just claimed something about behaviour it has not observed, using
-   words like should, must, obviously, probably or seems fine.
+2. The model claims unobserved behaviour.
 3. It is about to change several callers or files, or run something expensive.
 4. It has read the same file twice without learning anything new.
-5. It can state the result it wants but cannot predict the next concrete value.
+5. It knows the result it wants but not the next concrete value.
 
-The first trigger is also picked up from your own message. Say something like "I
-patched it and the bug survived" and one extra sentence goes into that turn's
-system prompt, pointing at the duck. It nudges and never blocks, and when nothing
-matches, the turn is byte for byte the same as having no hook at all.
-
-That hook exists because of a measurement. A prompt saying "I already added a
-retry and it still happened" produced zero duck calls from the tool description
-alone. With the nudge, the same prompt produced three. The detector gets 22 out
-of 22 on phrasings that should fire, and 14 out of 14 on ordinary requests that
-should stay quiet.
+A message about a failed fix adds a one-turn nudge toward the duck. It never
+blocks. No match leaves the turn unchanged.
 
 ## Commands
 
@@ -139,30 +116,14 @@ should stay quiet.
 
 ## Development
 
-Node.js 22.18 or newer runs the TypeScript behavior tests natively. Install
-dependencies with npm, then run the local quality gate before opening a PR:
+Requires Node.js 22.18 or newer.
 
 ```bash
 npm install
 npm run check
 ```
 
-`npm run check` verifies formatting, strict no-emit TypeScript types, test markers,
-package contents, and the native behavior suite. It was added for [issue #3](https://github.com/ChWehner/pi-rubber-duck/issues/3).
-No framework or fixtures are needed: all of the logic sits in pure exported
-functions, so the tests need no harness or mocks. The prompts get tested too. The
-tool description has to lead with the trigger list, avoid repeating what the `exit`
-enum already says, and never ship stray whitespace to the model.
-
-The CI workflow exposes the stable `quality` status. After it has merged to the
-default branch and reported a run, a maintainer must manually require `quality` and
-apply any direct-push policy through branch protection or rulesets for both `develop`
-and `main`; the workflow does not change GitHub administration settings.
-
-Publishing starts only when a non-prerelease GitHub Release is published. Its tag must
-exactly match `v<package.json.version>`; before publishing, the workflow runs `npm run
-check` and verifies the package payload. npm trusted publishing uses GitHub OIDC, so no
-`NPM_TOKEN` is stored in the repository.
+`npm run check` runs format, type, test and package checks.
 
 ## Contribute
 
@@ -170,16 +131,12 @@ Issue first, always. Open one with the bug, feature or chore template, then
 branch off `develop` as `feature/…`, `bug/…` or `chore/…`, one problem per
 branch. Fork the repo if you do not have push access.
 
-Commits read `#42: Add feedback button`, imperative and under 72 characters.
-Pull requests go into `develop`, titled `Feature: Add feedback button (#42)`,
-using the PR template and closing their issue. `main` stays production-ready and
-is released from semver tags. Only `hotfix/…` starts from `main` and targets it,
-and lands in `develop` afterwards.
+Use an imperative commit subject under 72 characters. Pull requests target
+`develop`, use the PR template and close their issue. `main` stays production-ready.
+A `hotfix/…` starts from `main`, targets it and then lands in `develop`.
 
-Before opening the PR, run `npm run check`, review your own diff and keep it under
-400 lines. A maintainer reviews and merges. The CI-quality PR for issue #3 has a
-separate 200-line review-discussion budget; it is stricter than and distinct from
-this repository-wide 400-line contributor guideline.
+Before opening a PR, run `npm run check`, review the diff and keep it under 400
+lines. A maintainer reviews and merges.
 
 ## Credits
 
